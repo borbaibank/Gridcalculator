@@ -16,7 +16,7 @@ export function SimulationPanel({
   subtitle,
   sim,
   investment,
-  coinLabel = "เหรียญถือ",
+  coinLabel = "Coin Held",
   emphasizeCoin = false,
 }: SimulationPanelProps) {
   const pnlVariant = sim.totalPnl >= 0 ? "success" : "danger";
@@ -44,27 +44,27 @@ export function SimulationPanel({
         />
         <StatCard
           compact
-          label="กำไร Realized (Grid ขาย)"
+          label="Realized PnL (grid sells)"
           value={formatUsd(sim.realizedPnl)}
           variant={realizedVariant}
         />
         <StatCard
           compact
-          label="กำไร/ขาดทุน Unrealized (เหรียญ)"
+          label="Unrealized PnL (coin)"
           value={formatUsd(sim.unrealizedPnl)}
           variant={unrealizedVariant}
         />
         <StatCard
           compact
-          label="กำไรรวม"
+          label="Total PnL"
           value={formatUsd(sim.totalPnl)}
           variant={pnlVariant}
         />
-        <StatCard compact label="USDT คงเหลือ" value={formatUsd(sim.usdtBalance)} />
-        <StatCard compact label="มูลค่ารวม" value={formatUsd(sim.totalEquity)} variant="primary" />
+        <StatCard compact label="USDT Balance" value={formatUsd(sim.usdtBalance)} />
+        <StatCard compact label="Total Equity" value={formatUsd(sim.totalEquity)} variant="primary" />
         <StatCard compact label="Avg Cost" value={`$${formatNumber(sim.avgCost)}`} />
-        <StatCard compact label="Buy ที่ Fill" value={String(sim.filledBuys)} />
-        <StatCard compact label="Sell ที่ Fill" value={String(sim.filledSells)} />
+        <StatCard compact label="Buys Filled" value={String(sim.filledBuys)} />
+        <StatCard compact label="Sells Filled" value={String(sim.filledSells)} />
       </div>
 
       <div className="grid gap-3 border-t border-[var(--color-border)] pt-4 sm:grid-cols-2">
@@ -76,7 +76,7 @@ export function SimulationPanel({
             {sim.liquidationPrice > 0 ? `$${formatNumber(sim.liquidationPrice)}` : "—"}
           </p>
           <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-            ห่างจากราคาเป้าหมาย {formatPercent(sim.distanceToLiqPercent)}
+            {formatPercent(sim.distanceToLiqPercent)} from target price
           </p>
         </div>
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 p-4">
@@ -96,7 +96,7 @@ export function SimulationPanel({
             </div>
           </div>
           <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-            ROI {formatPercent((sim.totalPnl / investment) * 100)} จากทุน {formatUsd(investment)}
+            ROI {formatPercent((sim.totalPnl / investment) * 100)} on {formatUsd(investment)} capital
           </p>
         </div>
       </div>

@@ -116,8 +116,11 @@ export function calculateGrid(
   }
 
   const orders = buildOrders(cells, startBotPrice, direction, botStarted);
-  const buyOrdersBelow = orders.filter((o) => o.type === "buy" && o.status === "placed").length;
-  const sellOrdersAbove = orders.filter((o) => o.type === "sell" && o.status === "placed").length;
+  const { buyOrdersBelow, sellOrdersAbove } = countOrderBookStats(
+    orders,
+    startBotPrice,
+    direction,
+  );
 
   const holdings = botStarted
     ? computeInitialHoldings(cells, startBotPrice, quotePerGrid, direction)
@@ -226,6 +229,40 @@ export function calculateGrid(
     liquidationPriceBase,
     investment,
     marginCollateral: input.margin,
+  };
+}
+
+/** Active grid orders relative to start price — direction-aware book counts. */
+function countOrderBookStats(
+  orders: GridOrder[],
+  startPrice: number,
+  direction: GridCalculatorInput["direction"],
+): { buyOrdersBelow: number; sellOrdersAbove: number } {
+  if (direction === "neutral") {
+    return {
+      buyOrdersBelow: orders.filter((o) => o.type === "buy" && o.status === "placed").length,
+      sellOrdersAbove: orders.filter((o) => o.type === "sell" && o.status === "placed").length,
+    };
+  }
+
+  if (direction === "long") {
+    return {
+      buyOrdersBelow: orders.filter(
+        (o) => o.type === "buy" && o.status === "placed" && o.price < startPrice,
+      ).length,
+      sellOrdersAbove: orders.filter(
+        (o) => o.type === "sell" && o.status === "pending" && o.price > startPrice,
+      ).length,
+    };
+  }
+
+  return {
+    buyOrdersBelow: orders.filter(
+      (o) => o.type === "buy" && o.status === "pending" && o.price < startPrice,
+    ).length,
+    sellOrdersAbove: orders.filter(
+      (o) => o.type === "sell" && o.status === "placed" && o.price > startPrice,
+    ).length,
   };
 }
 

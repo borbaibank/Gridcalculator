@@ -1,3 +1,5 @@
+import { VisitCounter } from "@/components/layout/VisitCounter";
+
 export function Footer() {
   return (
     <footer className="border-t border-[var(--color-border)] py-6">
@@ -5,9 +7,12 @@ export function Footer() {
         <p className="text-xs text-[var(--color-text-muted)]">
           © {new Date().getFullYear()} GridCalc
         </p>
-        <p className="text-[11px] text-[var(--color-text-muted)]/70">
-          ไม่ใช่คำแนะนำการลงทุน · ใช้ความเสี่ยงของคุณเอง
-        </p>
+        <div className="flex flex-col items-center gap-1 sm:flex-row sm:gap-4">
+          <VisitCounter />
+          <p className="text-[11px] text-[var(--color-text-muted)]/70">
+            Not financial advice · Trade at your own risk
+          </p>
+        </div>
       </div>
     </footer>
   );

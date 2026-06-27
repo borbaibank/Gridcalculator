@@ -11,11 +11,11 @@ import { formatNumber, formatPercent, formatUsd } from "@/lib/utils/format";
 import type { Direction, GridType } from "@/types/calculator";
 
 export function GridCalculator() {
-  const [upperPrice, setUpperPrice] = useState("50000");
+  const [upperPrice, setUpperPrice] = useState("120000");
   const [lowerPrice, setLowerPrice] = useState("40000");
-  const [currentPrice, setCurrentPrice] = useState("45000");
+  const [currentPrice, setCurrentPrice] = useState("60000");
   const [startBotPrice, setStartBotPrice] = useState("");
-  const [gridCount, setGridCount] = useState("10");
+  const [gridCount, setGridCount] = useState("200");
   const [margin, setMargin] = useState("200");
   const [addedMargin, setAddedMargin] = useState("0");
   const [feePercent, setFeePercent] = useState("0.05");
@@ -107,10 +107,10 @@ export function GridCalculator() {
           Grid Trading Calculator
         </p>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          คำนวณ <span className="gradient-text">Grid Bot</span>
+          Plan Your <span className="gradient-text">Grid Bot</span>
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[var(--color-text-muted)] sm:mx-0">
-          จำลอง Profit/Grid, การแบ่งทุน, และออเดอร์ Buy/Sell ก่อนเปิดบอทจริง
+          Simulate profit per grid, capital allocation, and buy/sell orders before going live.
         </p>
       </div>
 
@@ -123,7 +123,7 @@ export function GridCalculator() {
                 <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--color-primary-glow)] text-xs text-[var(--color-primary)]">
                   ⚙
                 </span>
-                ตั้งค่า Grid
+                Grid Settings
               </h2>
             </div>
 
@@ -169,7 +169,7 @@ export function GridCalculator() {
                 prefix="$"
                 value={currentPrice}
                 onChange={(e) => setCurrentPrice(e.target.value)}
-                hint="ราคาตลาดตอนนี้ + จุดจำลอง (ถ้าไม่ซ้ำ Start/Upper/Lower)"
+                hint="Current market price + simulation target (if not Start/Upper/Lower)"
               />
               <InputField
                 label="Start Bot"
@@ -177,7 +177,7 @@ export function GridCalculator() {
                 prefix="$"
                 value={startBotPrice}
                 onChange={(e) => setStartBotPrice(e.target.value)}
-                hint="ว่าง = ใช้ Current · ราคาที่บอทเริ่มวางออเดอร์"
+                hint="Empty = use Current · price where the bot starts placing orders"
               />
             </div>
 
@@ -244,7 +244,7 @@ export function GridCalculator() {
                 min={0}
                 value={addedMargin}
                 onChange={(e) => setAddedMargin(e.target.value)}
-                hint="Buffer เพิ่มเติมป้องกัน liquidation (ไม่ใช้ซื้อ Grid)"
+                hint="Extra buffer to reduce liquidation risk (not used for grid orders)"
               />
               <div className="flex flex-wrap gap-2">
                 {[50, 100, 500].map((amount) => (
@@ -260,7 +260,7 @@ export function GridCalculator() {
               </div>
               {(parsed.extra > 0 || parsed.collateral > 0) && (
                 <p className="text-xs text-[var(--color-success)]">
-                  Wallet รวม {formatUsd(parsed.collateral + parsed.extra)} (Margin + Add Margin)
+                  Total wallet {formatUsd(parsed.collateral + parsed.extra)} (Margin + Add Margin)
                 </p>
               )}
             </div>
@@ -273,18 +273,18 @@ export function GridCalculator() {
             <>
               {!result.botStarted && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
-                  <p className="font-semibold text-amber-300">บอทยังไม่เริ่มทำงาน</p>
+                  <p className="font-semibold text-amber-300">Bot not started yet</p>
                   <p className="mt-1 text-[var(--color-text-muted)]">
-                    รอราคาไปถึง{" "}
+                    Waiting for price to reach{" "}
                     <span className="font-mono font-semibold text-amber-300">
                       ${formatNumber(result.startBotPrice)}
                     </span>
                     {result.startBotPrice < parsed.current
-                      ? " (ราคาต้องลงมาถึงจุดนี้)"
+                      ? " (price must drop to this level)"
                       : result.startBotPrice > parsed.current
-                        ? " (ราคาต้องขึ้นมาถึงจุดนี้)"
+                        ? " (price must rise to this level)"
                         : ""}
-                    · ออเดอร์ทั้งหมดอยู่ในสถานะ pending
+                    · All orders are pending
                   </p>
                 </div>
               )}
@@ -309,7 +309,7 @@ export function GridCalculator() {
                   <div className="flex gap-3">
                     <div className="rounded-xl border border-[var(--color-success)]/20 bg-[var(--color-success-dim)] px-4 py-3 text-center">
                       <p className="text-[10px] font-semibold uppercase text-[var(--color-success)]">
-                        Buy
+                        Buy{direction === "long" ? " Below" : direction === "short" ? " Pending" : ""}
                       </p>
                       <p className="text-2xl font-bold text-[var(--color-success)]">
                         {result.buyOrdersBelow}
@@ -317,7 +317,7 @@ export function GridCalculator() {
                     </div>
                     <div className="rounded-xl border border-[var(--color-danger)]/20 bg-[var(--color-danger-dim)] px-4 py-3 text-center">
                       <p className="text-[10px] font-semibold uppercase text-[var(--color-danger)]">
-                        Sell
+                        Sell{direction === "long" ? " Pending" : direction === "short" ? " Above" : ""}
                       </p>
                       <p className="text-2xl font-bold text-[var(--color-danger)]">
                         {result.sellOrdersAbove}
@@ -328,7 +328,7 @@ export function GridCalculator() {
               </div>
 
               {/* Margin & Risk */}
-              <SectionCard title="Margin & Liquidation" subtitle="สถานะปัจจุบัน" noPadding>
+              <SectionCard title="Margin & Liquidation" subtitle="Current status" noPadding>
                 <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4 sm:p-6">
                   <StatCard
                     compact
@@ -355,7 +355,7 @@ export function GridCalculator() {
                 <div className="grid gap-3 border-t border-[var(--color-border)] p-5 sm:grid-cols-2 sm:p-6">
                   <div className="rounded-xl border border-[var(--color-danger)]/25 bg-[var(--color-danger-dim)] p-4">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-danger)]">
-                      Liq Price (ปัจจุบัน)
+                      Liq Price (current)
                     </p>
                     <p className="mt-1 text-2xl font-bold text-[var(--color-danger)]">
                       {result.liquidationPrice > 0
@@ -363,24 +363,24 @@ export function GridCalculator() {
                         : "—"}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                      ห่าง {formatPercent(result.distanceToLiqPercent)} จากราคาปัจจุบัน
+                      {formatPercent(result.distanceToLiqPercent)} away from current price
                     </p>
                     {parsed.extra > 0 && result.liquidationPriceBase > 0 && (
                       <p className="mt-2 text-xs text-[var(--color-success)]">
-                        ก่อน Add Margin: ${formatNumber(result.liquidationPriceBase)} → หลังเพิ่ม{" "}
+                        Before Add Margin: ${formatNumber(result.liquidationPriceBase)} → after +{" "}
                         {formatUsd(parsed.extra)}: ${formatNumber(result.liquidationPrice)}
                       </p>
                     )}
                   </div>
                   <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-4">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                      ถ้าราคาลงไป Lower
+                      If price drops to Lower
                     </p>
                     <p className="mt-1 text-2xl font-bold text-[var(--color-text)]">
                       Liq ${formatNumber(result.simulationAtLower.liquidationPrice)}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                      กำไรรวม {formatUsd(result.simulationAtLower.totalPnl)} · เหรียญ{" "}
+                      Total PnL {formatUsd(result.simulationAtLower.totalPnl)} · Coin{" "}
                       {formatNumber(result.simulationAtLower.coinHeld, 4)}
                     </p>
                   </div>
@@ -389,41 +389,41 @@ export function GridCalculator() {
 
               {/* Coin holdings simulation */}
               <SectionCard
-                title="สถานะเหรียญตามราคา"
-                subtitle="จำลองจาก Start Bot Price → ราคาเป้าหมาย"
+                title="Coin Holdings by Price"
+                subtitle="Simulated from Start Bot Price → target price"
                 noPadding
               >
                 <div className="space-y-4 p-5 sm:p-6">
                   <p className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-elevated)]/40 px-4 py-3 text-sm text-[var(--color-text-muted)]">
-                    ราคาขึ้น → Grid ขายทยอย → เหรียญลดลงจนเกือบหมดที่ Upper · ราคาลง → Grid
-                    ซื้อทยอย → เหรียญเพิ่มขึ้นที่ Lower
+                    Price rises → grid sells gradually → coin drops toward zero at Upper · Price
+                    falls → grid buys gradually → coin increases at Lower
                   </p>
                   <SimulationPanel
                     title="@ Start Bot Price"
-                    subtitle="เหรียญที่ถือเมื่อบอทเริ่มวางออเดอร์"
+                    subtitle="Coin held when the bot starts placing orders"
                     sim={result.simulationAtStart}
                     investment={result.totalWallet}
-                    coinLabel="เหรียญถือ @ Start"
+                    coinLabel="Coin @ Start"
                     emphasizeCoin
                   />
                   <SimulationPanel
                     title="@ Upper Price"
-                    subtitle="ราคาขึ้นสุดช่วง → Sell grids fill → เหรียญขายออก"
+                    subtitle="Price at top of range → sell grids fill → coin sold out"
                     sim={result.simulationAtUpper}
                     investment={result.totalWallet}
                   />
                   <SimulationPanel
                     title="@ Lower Price"
-                    subtitle="ราคาลงสุดช่วง → Buy grids fill → ซื้อเหรียญเพิ่ม"
+                    subtitle="Price at bottom of range → buy grids fill → more coin accumulated"
                     sim={result.simulationAtLower}
                     investment={result.totalWallet}
                   />
                   <SimulationPanel
                     title="@ Current Price"
-                    subtitle="จำลองจาก Start Bot → ราคาที่กรอก (Current)"
+                    subtitle="Simulated from Start Bot → entered price (Current)"
                     sim={result.simulationAtCurrent}
                     investment={result.totalWallet}
-                    coinLabel="เหรียญถือ @ Current"
+                    coinLabel="Coin @ Current"
                     emphasizeCoin
                   />
                 </div>
@@ -484,17 +484,17 @@ export function GridCalculator() {
               </div>
               <p className="text-base font-semibold text-[var(--color-text)]">
                 {priceError
-                  ? "ราคาปัจจุบันอยู่นอกช่วง"
+                  ? "Current price is out of range"
                   : startPriceError
-                    ? "Start Bot Price อยู่นอกช่วง"
-                    : "กรอกค่าเพื่อเริ่มคำนวณ"}
+                    ? "Start Bot Price is out of range"
+                    : "Enter values to start calculating"}
               </p>
               <p className="mt-2 max-w-xs text-sm text-[var(--color-text-muted)]">
                 {priceError
-                  ? "Current Price ต้องอยู่ระหว่าง Lower และ Upper Price"
+                  ? "Current Price must be between Lower and Upper Price"
                   : startPriceError
-                    ? "Start Bot Price ต้องอยู่ระหว่าง Lower และ Upper Price"
-                    : "ตั้งค่า price range, grids และ margin ทางซ้าย"}
+                    ? "Start Bot Price must be between Lower and Upper Price"
+                    : "Set price range, grids, and margin on the left"}
               </p>
             </div>
           )}
@@ -504,7 +504,7 @@ export function GridCalculator() {
       {/* Tables — full width, tabbed */}
       {result && (
         <SectionCard
-          title="รายละเอียด"
+          title="Details"
           subtitle={`${result.orders.length} orders · ${result.cells.length} grids`}
           noPadding
         >
