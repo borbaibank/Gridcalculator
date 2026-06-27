@@ -9,6 +9,8 @@ import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "Segoe UI", "sans-serif"],
   variable: "--font-sans",
 });
 

@@ -5,6 +5,8 @@ import type {
   GridOrder,
 } from "@/types/calculator";
 import { gridInvestment, isBotStarted, totalWallet } from "@/types/calculator";
+import { buildPriceLevels } from "@/lib/calculators/price-levels";
+import { buildGridCells } from "@/lib/calculators/grid-cells";
 import {
   calculateLiquidationLong,
   calculateLiquidationShort,
@@ -13,34 +15,8 @@ import {
   snapshotAtStart,
 } from "@/lib/calculators/simulation";
 
-export function buildPriceLevels(input: GridCalculatorInput): number[] {
-  const { upperPrice, lowerPrice, gridCount, gridType } = input;
-  const levels: number[] = [];
-
-  if (gridType === "arithmetic") {
-    const step = (upperPrice - lowerPrice) / gridCount;
-    for (let i = 0; i <= gridCount; i++) {
-      levels.push(lowerPrice + step * i);
-    }
-  } else {
-    const ratio = Math.pow(upperPrice / lowerPrice, 1 / gridCount);
-    for (let i = 0; i <= gridCount; i++) {
-      levels.push(lowerPrice * Math.pow(ratio, i));
-    }
-  }
-
-  return levels;
-}
-
-function cellZone(
-  buyPrice: number,
-  sellPrice: number,
-  currentPrice: number,
-): GridCell["zone"] {
-  if (currentPrice >= sellPrice) return "below";
-  if (currentPrice <= buyPrice) return "above";
-  return "current";
-}
+export { buildPriceLevels } from "@/lib/calculators/price-levels";
+export { buildGridCells } from "@/lib/calculators/grid-cells";
 
 export function calculateGrid(
   input: GridCalculatorInput,
@@ -75,45 +51,13 @@ export function calculateGrid(
   }
 
   const priceLevels = buildPriceLevels(input);
-  const feeRate = feePercent / 100;
+  const cells = buildGridCells(input);
+  if (!cells) return null;
+
   const quotePerGrid = investment / gridCount;
   const spacing = priceLevels[1] - priceLevels[0];
   const midPrice = (upperPrice + lowerPrice) / 2;
   const spacingPercent = midPrice > 0 ? (spacing / midPrice) * 100 : 0;
-
-  const cells: GridCell[] = [];
-
-  for (let i = 0; i < gridCount; i++) {
-    const buyPrice = priceLevels[i];
-    const sellPrice = priceLevels[i + 1];
-    const quantity = quotePerGrid / buyPrice;
-
-    const grossProfit =
-      direction === "short"
-        ? quantity * (buyPrice - sellPrice)
-        : quantity * (sellPrice - buyPrice);
-
-    const buyFee = buyPrice * quantity * feeRate;
-    const sellFee = sellPrice * quantity * feeRate;
-    const fee = buyFee + sellFee;
-    const netProfit = grossProfit - fee;
-    const profitPercent = buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0;
-    const netProfitPercent = profitPercent - feePercent * 2;
-
-    cells.push({
-      level: i + 1,
-      buyPrice,
-      sellPrice,
-      quotePerGrid,
-      quantity,
-      grossProfit,
-      fee,
-      netProfit,
-      profitPercent: direction === "short" ? -profitPercent : profitPercent,
-      netProfitPercent: direction === "short" ? -netProfitPercent : netProfitPercent,
-      zone: cellZone(buyPrice, sellPrice, startBotPrice),
-    });
-  }
 
   const orders = buildOrders(cells, startBotPrice, direction, botStarted);
   const { buyOrdersBelow, sellOrdersAbove } = countOrderBookStats(

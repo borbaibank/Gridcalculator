@@ -40,14 +40,13 @@ The calculator works without env vars. On Vercel, SEO metadata, `sitemap.xml`, a
 
 ## Deploy (Vercel)
 
-Repo: [github.com/borbaibank/Girdcalculator](https://github.com/borbaibank/Girdcalculator) *(rename to Gridcalculator on GitHub when ready)*
+Repo: [github.com/borbaibank/Gridcalculator](https://github.com/borbaibank/Gridcalculator)
 
 ### One-time setup
 
 1. Go to [vercel.com](https://vercel.com) and sign in with **GitHub**
 2. Click **Add New… → Project**
-3. Import **borbaibank/Girdcalculator** (or renamed **Gridcalculator**)
-4. Keep default settings:
+3. Import **borbaibank/Gridcalculator**4. Keep default settings:
    - **Framework Preset:** Next.js
    - **Build Command:** `npm run build`
    - **Output Directory:** (auto)
@@ -67,6 +66,14 @@ git push origin main
 
 Check progress at **Vercel Dashboard → Deployments**.
 
+### Rename Vercel domain (gird → grid)
+
+If the Vercel project still uses the typo `girdcalculator`:
+
+1. **Vercel** → **Settings → General → Project Name** → `gridcalculator`
+2. **Vercel** → **Settings → Environment Variables** → set `NEXT_PUBLIC_SITE_URL` to `https://gridcalculator.vercel.app`
+3. Redeploy (push to `main` or **Deployments → Redeploy**)
+4. **Google Search Console** — add the new URL and submit `https://gridcalculator.vercel.app/sitemap.xml`
 ### Vercel environment variables
 
 In **Project → Settings → Environment Variables**, add:

@@ -16,7 +16,7 @@ export function SectionCard({
   noPadding = false,
 }: SectionCardProps) {
   return (
-    <div className={`card-glass overflow-hidden ${className}`}>
+    <div className={`card-glass overflow-hidden p-0 ${className}`}>
       <div className="border-b border-[var(--color-border)] px-5 py-4 sm:px-6">
         <h2 className="section-title">{title}</h2>
         {subtitle && (

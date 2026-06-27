@@ -33,7 +33,7 @@ export function StatCard({
         {label}
       </p>
       <p
-        className={`mt-1 font-semibold leading-tight ${variantStyles[variant]} ${compact ? "text-base" : "text-lg"}`}
+        className={`mt-1 font-semibold leading-tight break-words ${variantStyles[variant]} ${compact ? "text-sm sm:text-base" : "text-lg"}`}
       >
         {value}
       </p>

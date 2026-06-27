@@ -1,29 +1,90 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { InputField, ToggleGroup } from "@/components/ui/FormFields";
 import { StatCard } from "@/components/ui/StatCard";
 import { SectionCard } from "@/components/ui/SectionCard";
+import { BacktestPanel } from "@/components/grid/BacktestPanel";
 import { PriceRangeBar } from "@/components/grid/PriceRangeBar";
 import { SimulationPanel } from "@/components/grid/SimulationPanel";
 import { calculateGrid, formatProfitPerGridRange } from "@/lib/calculators/grid";
+import { loadGridSettings, saveGridSettings } from "@/lib/grid-settings-storage";
 import { formatNumber, formatPercent, formatUsd } from "@/lib/utils/format";
 import type { Direction, GridType } from "@/types/calculator";
 
 export function GridCalculator() {
-  const [upperPrice, setUpperPrice] = useState("120000");
-  const [lowerPrice, setLowerPrice] = useState("40000");
-  const [currentPrice, setCurrentPrice] = useState("60000");
-  const [startBotPrice, setStartBotPrice] = useState("");
-  const [gridCount, setGridCount] = useState("200");
-  const [margin, setMargin] = useState("200");
-  const [addedMargin, setAddedMargin] = useState("0");
-  const [feePercent, setFeePercent] = useState("0.05");
-  const [leverage, setLeverage] = useState("5");
-  const [maintenanceMargin, setMaintenanceMargin] = useState("0.4");
-  const [direction, setDirection] = useState<Direction>("neutral");
-  const [gridType, setGridType] = useState<GridType>("arithmetic");
+  const [upperPrice, setUpperPrice] = useState(() => loadGridSettings()?.upperPrice ?? "120000");
+  const [lowerPrice, setLowerPrice] = useState(() => loadGridSettings()?.lowerPrice ?? "40000");
+  const [currentPrice, setCurrentPrice] = useState(() => loadGridSettings()?.currentPrice ?? "60000");
+  const [startBotPrice, setStartBotPrice] = useState(() => loadGridSettings()?.startBotPrice ?? "");
+  const [gridCount, setGridCount] = useState(() => loadGridSettings()?.gridCount ?? "200");
+  const [margin, setMargin] = useState(() => loadGridSettings()?.margin ?? "200");
+  const [addedMargin, setAddedMargin] = useState(() => loadGridSettings()?.addedMargin ?? "0");
+  const [feePercent, setFeePercent] = useState(() => loadGridSettings()?.feePercent ?? "0.05");
+  const [leverage, setLeverage] = useState(() => loadGridSettings()?.leverage ?? "5");
+  const [maintenanceMargin, setMaintenanceMargin] = useState(
+    () => loadGridSettings()?.maintenanceMargin ?? "0.4",
+  );
+  const [direction, setDirection] = useState<Direction>(
+    () => loadGridSettings()?.direction ?? "neutral",
+  );
+  const [gridType, setGridType] = useState<GridType>(
+    () => loadGridSettings()?.gridType ?? "arithmetic",
+  );
   const [activeTable, setActiveTable] = useState<"orders" | "grid">("orders");
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    saveGridSettings({
+      upperPrice,
+      lowerPrice,
+      currentPrice,
+      startBotPrice,
+      gridCount,
+      margin,
+      addedMargin,
+      feePercent,
+      leverage,
+      maintenanceMargin,
+      direction,
+      gridType,
+    });
+  }, [
+    hydrated,
+    upperPrice,
+    lowerPrice,
+    currentPrice,
+    startBotPrice,
+    gridCount,
+    margin,
+    addedMargin,
+    feePercent,
+    leverage,
+    maintenanceMargin,
+    direction,
+    gridType,
+  ]);
+
+  useEffect(() => {
+    if (!hydrated || loadGridSettings()?.currentPrice) return;
+    let cancelled = false;
+    fetch("https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT")
+      .then((res) => res.json())
+      .then((data: { price?: string }) => {
+        if (cancelled || !data.price) return;
+        const price = Math.round(parseFloat(data.price));
+        if (Number.isFinite(price)) setCurrentPrice(String(price));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated]);
 
   const parsed = useMemo(() => {
     const upper = parseFloat(upperPrice);
@@ -38,7 +99,7 @@ export function GridCalculator() {
     return { upper, lower, current, grids, collateral, extra, lev, invest, start: startRaw };
   }, [upperPrice, lowerPrice, currentPrice, gridCount, margin, addedMargin, leverage, startBotPrice]);
 
-  const result = useMemo(() => {
+  const gridInput = useMemo(() => {
     const { upper, lower, current, grids, collateral, extra, start } = parsed;
     const effectiveStart = Number.isFinite(start) ? start : current;
 
@@ -56,23 +117,26 @@ export function GridCalculator() {
       return null;
     }
 
-    return calculateGrid(
-      {
-        upperPrice: upper,
-        lowerPrice: lower,
-        currentPrice: current,
-        startBotPrice: effectiveStart,
-        gridCount: grids,
-        margin: collateral,
-        addedMargin: Math.max(0, extra),
-        feePercent: parseFloat(feePercent) || 0,
-        leverage: parseFloat(leverage) || 1,
-        maintenanceMarginPercent: parseFloat(maintenanceMargin) || 0.4,
-        direction,
-        gridType,
-      },
-    );
+    return {
+      upperPrice: upper,
+      lowerPrice: lower,
+      currentPrice: current,
+      startBotPrice: effectiveStart,
+      gridCount: grids,
+      margin: collateral,
+      addedMargin: Math.max(0, extra),
+      feePercent: parseFloat(feePercent) || 0,
+      leverage: parseFloat(leverage) || 1,
+      maintenanceMarginPercent: parseFloat(maintenanceMargin) || 0.4,
+      direction,
+      gridType,
+    };
   }, [parsed, feePercent, leverage, maintenanceMargin, direction, gridType]);
+
+  const result = useMemo(
+    () => (gridInput ? calculateGrid(gridInput) : null),
+    [gridInput],
+  );
 
   const effectiveStart = Number.isFinite(parsed.start) ? parsed.start : parsed.current;
   const startPriceError =
@@ -114,7 +178,7 @@ export function GridCalculator() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(300px,380px)_1fr]">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
         {/* Sidebar inputs */}
         <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
           <div className="card-glass space-y-5">
@@ -268,7 +332,7 @@ export function GridCalculator() {
         </div>
 
         {/* Results */}
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           {result ? (
             <>
               {!result.botStarted && (
@@ -500,6 +564,8 @@ export function GridCalculator() {
           )}
         </div>
       </div>
+
+      {gridInput && <BacktestPanel key="backtest" grid={gridInput} />}
 
       {/* Tables — full width, tabbed */}
       {result && (
