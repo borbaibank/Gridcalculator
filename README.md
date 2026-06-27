@@ -34,9 +34,9 @@ Copy [`.env.example`](.env.example) to `.env.local` for local dev.
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| `NEXT_PUBLIC_SITE_URL` | Recommended | Canonical URL for sitemap, OpenGraph, and SEO |
+| `NEXT_PUBLIC_SITE_URL` | Optional | Fallback for local builds only — production SEO uses the live request domain |
 
-The calculator works without env vars. Production SEO metadata works best when `NEXT_PUBLIC_SITE_URL` is set on Vercel.
+The calculator works without env vars. On Vercel, SEO metadata, `sitemap.xml`, and `robots.txt` automatically use whichever domain the visitor requests (including custom domains after you add them).
 
 ## Deploy (Vercel)
 
