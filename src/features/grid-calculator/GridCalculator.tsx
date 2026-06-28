@@ -167,13 +167,14 @@ export function GridCalculator() {
       {/* Hero */}
       <div className="text-center sm:text-left">
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-primary)]">
-          Grid Trading Calculator
+          Free Crypto Grid Bot Calculator
         </p>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Plan Your <span className="gradient-text">Grid Bot</span>
+          Binance Futures <span className="gradient-text">Grid Trading</span> Calculator
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[var(--color-text-muted)] sm:mx-0">
-          Simulate profit per grid, capital allocation, and buy/sell orders before going live.
+          Estimate profit per grid, liquidation price, margin, and buy/sell orders for
+          arithmetic or geometric grids — long, short, or neutral — before you deploy a bot.
         </p>
       </div>
 

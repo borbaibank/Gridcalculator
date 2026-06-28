@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { buildRootMetadata } from "@/lib/metadata";
 import { getRequestSiteUrl } from "@/lib/site";
 import "./globals.css";
@@ -19,14 +20,17 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildRootMetadata(siteUrl);
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteUrl = await getRequestSiteUrl();
+
   return (
     <html lang="en" className={jakarta.variable}>
       <body className={`${jakarta.className} flex min-h-screen flex-col`}>
+        <JsonLd siteUrl={siteUrl} />
         <Header />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
           {children}
